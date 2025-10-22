@@ -57,3 +57,21 @@ export interface Schema {
   nodes: TableNodeData[];
   links: RelationshipLinkData[];
 }
+
+export type LayoutType =
+  | 'grid'
+  | 'hierarchic'
+  | 'orthogonal'
+  | 'organic'
+  | 'circular'
+  | 'star'
+  | 'top-down'
+  | 'left-right'
+  | 'relationship-paths'
+  | 'smart-organic';
+
+export interface LayoutOption {
+  value: LayoutType;
+  label: string;
+  description: string;
+}

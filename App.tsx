@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ERDViewer } from './components/ERDViewer';
-import { Schema, RawSchema } from './types';
+import { Schema, RawSchema, LayoutType } from './types';
 import { parseSchema, recalculateNodeHeights } from './services/schemaParser';
+import { applyLayout } from './services/layoutEngine';
 
 const App: React.FC = () => {
   const [rawSchema, setRawSchema] = useState<RawSchema | null>(null);
@@ -10,6 +11,7 @@ const App: React.FC = () => {
   const [showColumns, setShowColumns] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [currentLayout, setCurrentLayout] = useState<LayoutType>('grid');
 
   const handleFileUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -99,6 +101,14 @@ const App: React.FC = () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showColumns, rawSchema]);
 
+  const handleLayoutChange = useCallback((layoutType: LayoutType) => {
+    setCurrentLayout(layoutType);
+    if (schema) {
+      const newNodes = applyLayout(schema.nodes, schema.links, layoutType);
+      setSchema(prev => prev ? { ...prev, nodes: newNodes } : null);
+    }
+  }, [schema]);
+
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-gray-100 font-sans">
@@ -108,6 +118,8 @@ const App: React.FC = () => {
         setShowColumns={setShowColumns}
         hasSchema={!!schema}
         fileName={fileName}
+        currentLayout={currentLayout}
+        onLayoutChange={handleLayoutChange}
       />
       <main className="flex-grow relative overflow-hidden">
         {error && (

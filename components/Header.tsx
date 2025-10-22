@@ -1,5 +1,7 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
+import { LayoutType } from '../types';
+import { getLayoutOptions } from '../services/layoutEngine';
 
 interface HeaderProps {
   onFileUpload: (file: File) => void;
@@ -7,10 +9,22 @@ interface HeaderProps {
   setShowColumns: (show: boolean) => void;
   hasSchema: boolean;
   fileName: string | null;
+  currentLayout: LayoutType;
+  onLayoutChange: (layout: LayoutType) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onFileUpload, showColumns, setShowColumns, hasSchema, fileName }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onFileUpload,
+  showColumns,
+  setShowColumns,
+  hasSchema,
+  fileName,
+  currentLayout,
+  onLayoutChange
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+  const layoutOptions = getLayoutOptions();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -34,21 +48,74 @@ export const Header: React.FC<HeaderProps> = ({ onFileUpload, showColumns, setSh
       </div>
       <div className="flex items-center gap-6">
         {hasSchema && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-300">Show Details</span>
-            <button
-              onClick={() => setShowColumns(!showColumns)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
-                showColumns ? 'bg-cyan-500' : 'bg-gray-600'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  showColumns ? 'translate-x-6' : 'translate-x-1'
+          <>
+            <div className="relative">
+              <button
+                onClick={() => setShowLayoutMenu(!showLayoutMenu)}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
+                <span className="text-sm font-medium">
+                  {layoutOptions.find(opt => opt.value === currentLayout)?.label || 'Layout'}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              {showLayoutMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowLayoutMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-20 max-h-96 overflow-y-auto">
+                    <div className="p-2">
+                      {layoutOptions.map(option => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            onLayoutChange(option.value);
+                            setShowLayoutMenu(false);
+                          }}
+                          className={`w-full text-left px-3 py-2.5 rounded transition-colors ${
+                            currentLayout === option.value
+                              ? 'bg-cyan-600 text-white'
+                              : 'text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          <div className="font-medium text-sm">{option.label}</div>
+                          <div className={`text-xs mt-0.5 ${
+                            currentLayout === option.value ? 'text-cyan-100' : 'text-gray-500'
+                          }`}>
+                            {option.description}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-300">Show Details</span>
+              <button
+                onClick={() => setShowColumns(!showColumns)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                  showColumns ? 'bg-cyan-500' : 'bg-gray-600'
                 }`}
-              />
-            </button>
-          </div>
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    showColumns ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </>
         )}
         <input
           type="file"
