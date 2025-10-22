@@ -11,6 +11,7 @@ export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
   const [transform, setTransform] = useState(() => d3.zoomIdentity);
   const viewerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const zoomBehaviorRef = useRef<any>(null);
 
   const nodesMap = useMemo(() => {
     return new Map(nodes.map(node => [node.id, node]));
@@ -29,8 +30,36 @@ export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
         setTransform(event.transform);
       });
 
+    zoomBehaviorRef.current = zoom;
     d3.select(viewerRef.current).call(zoom);
   }, []);
+
+  const handleZoomIn = () => {
+    if (viewerRef.current && zoomBehaviorRef.current) {
+      d3.select(viewerRef.current)
+        .transition()
+        .duration(300)
+        .call(zoomBehaviorRef.current.scaleBy, 1.3);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (viewerRef.current && zoomBehaviorRef.current) {
+      d3.select(viewerRef.current)
+        .transition()
+        .duration(300)
+        .call(zoomBehaviorRef.current.scaleBy, 1 / 1.3);
+    }
+  };
+
+  const handleZoomReset = () => {
+    if (viewerRef.current && zoomBehaviorRef.current) {
+      d3.select(viewerRef.current)
+        .transition()
+        .duration(300)
+        .call(zoomBehaviorRef.current.transform, d3.zoomIdentity);
+    }
+  };
 
   useEffect(() => {
     nodeRefs.current.forEach((ref, id) => {
@@ -54,7 +83,7 @@ export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
   }, [nodes, transform.k, nodesMap]);
 
   return (
-    <div ref={viewerRef} className="w-full h-full cursor-grab active:cursor-grabbing bg-grid">
+    <div ref={viewerRef} className="w-full h-full cursor-grab active:cursor-grabbing bg-grid relative">
        <style>{`.bg-grid { background-image: radial-gradient(circle, #374151 1px, rgba(0, 0, 0, 0) 1px); background-size: 20px 20px; }`}</style>
       <div
         className="relative w-full h-full"
@@ -106,6 +135,43 @@ export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
             data={node}
           />
         ))}
+      </div>
+
+      {/* Zoom Controls */}
+      <div className="absolute bottom-6 right-6 flex flex-col gap-2 bg-gray-800/90 backdrop-blur-sm border border-gray-700 rounded-lg shadow-xl p-2 z-10">
+        <button
+          onClick={handleZoomIn}
+          className="p-2 hover:bg-gray-700 rounded transition-colors text-gray-200 group"
+          title="Zoom In"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+          </svg>
+        </button>
+        <div className="h-px bg-gray-700"></div>
+        <button
+          onClick={handleZoomOut}
+          className="p-2 hover:bg-gray-700 rounded transition-colors text-gray-200 group"
+          title="Zoom Out"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+          </svg>
+        </button>
+        <div className="h-px bg-gray-700"></div>
+        <button
+          onClick={handleZoomReset}
+          className="p-2 hover:bg-gray-700 rounded transition-colors text-gray-200 group"
+          title="Reset Zoom"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+        <div className="h-px bg-gray-700"></div>
+        <div className="px-2 py-1 text-xs text-gray-400 text-center font-mono">
+          {Math.round(transform.k * 100)}%
+        </div>
       </div>
     </div>
   );
