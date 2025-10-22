@@ -3,6 +3,11 @@ import React, { useRef, useState } from 'react';
 import { LayoutType } from '../types';
 import { getLayoutOptions } from '../services/layoutEngine';
 
+interface TableInfo {
+  id: string;
+  name: string;
+}
+
 interface HeaderProps {
   onFileUpload: (file: File) => void;
   showColumns: boolean;
@@ -11,6 +16,9 @@ interface HeaderProps {
   fileName: string | null;
   currentLayout: LayoutType;
   onLayoutChange: (layout: LayoutType) => void;
+  allTables: TableInfo[];
+  selectedTableIds: Set<string>;
+  onTableSelectionChange: (tableIds: Set<string>) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,10 +28,14 @@ export const Header: React.FC<HeaderProps> = ({
   hasSchema,
   fileName,
   currentLayout,
-  onLayoutChange
+  onLayoutChange,
+  allTables,
+  selectedTableIds,
+  onTableSelectionChange
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+  const [showTableSelector, setShowTableSelector] = useState(false);
   const layoutOptions = getLayoutOptions();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,6 +47,25 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleTableToggle = (tableId: string) => {
+    const newSelection = new Set(selectedTableIds);
+    if (newSelection.has(tableId)) {
+      newSelection.delete(tableId);
+    } else {
+      newSelection.add(tableId);
+    }
+    onTableSelectionChange(newSelection);
+  };
+
+  const handleSelectAll = () => {
+    const allIds = new Set(allTables.map(t => t.id));
+    onTableSelectionChange(allIds);
+  };
+
+  const handleDeselectAll = () => {
+    onTableSelectionChange(new Set());
   };
 
   return (
@@ -49,6 +80,72 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-6">
         {hasSchema && (
           <>
+            {/* Table Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowTableSelector(!showTableSelector)}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium">
+                  Tables ({selectedTableIds.size}/{allTables.length})
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              {showTableSelector && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowTableSelector(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-96 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-20 max-h-96 overflow-hidden flex flex-col">
+                    {/* Header with Select All / Deselect All */}
+                    <div className="p-3 border-b border-gray-700 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-200">Select Tables</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSelectAll}
+                          className="text-xs px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded transition-colors"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          onClick={handleDeselectAll}
+                          className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded transition-colors"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Scrollable table list */}
+                    <div className="overflow-y-auto p-2">
+                      {allTables.map(table => (
+                        <label
+                          key={table.id}
+                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-700 rounded cursor-pointer transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTableIds.has(table.id)}
+                            onChange={() => handleTableToggle(table.id)}
+                            className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 focus:ring-2"
+                          />
+                          <span className="text-sm text-gray-200 flex-1">{table.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className="relative">
               <button
                 onClick={() => setShowLayoutMenu(!showLayoutMenu)}
