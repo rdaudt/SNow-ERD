@@ -1,20 +1,35 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ServiceNow ERD Viewer
 
-# Run and deploy your AI Studio app
+A web-based Entity Relationship Diagram (ERD) viewer for ServiceNow database schemas. Upload your schema JSON file and visualize table relationships with multiple layout options.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1HyJ-CXyzg151SgdjrXWIiLwROiqEmCYy
+- Upload and parse ServiceNow schema JSON files
+- Multiple layout algorithms (grid, hierarchical, organic, circular, etc.)
+- Interactive table filtering
+- Toggle column details visibility
+- Zoom and pan functionality
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open your browser to `http://localhost:3000`
+
+## Build for Production
+
+```bash
+npm run build
+```
+
+The built files will be in the `dist/` directory.
