@@ -8,10 +8,12 @@ import { applyLayout } from './services/layoutEngine';
 const App: React.FC = () => {
   const [rawSchema, setRawSchema] = useState<RawSchema | null>(null);
   const [schema, setSchema] = useState<Schema | null>(null);
+  const [fullSchema, setFullSchema] = useState<Schema | null>(null); // Store unfiltered schema
   const [showColumns, setShowColumns] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [currentLayout, setCurrentLayout] = useState<LayoutType>('grid');
+  const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
 
   const handleFileUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -27,7 +29,11 @@ const App: React.FC = () => {
         }
         setRawSchema(json);
         const parsedSchema = parseSchema(json);
+        setFullSchema(parsedSchema);
         setSchema(parsedSchema);
+        // Initialize with all tables selected
+        const allTableIds = new Set(parsedSchema.nodes.map(node => node.id));
+        setSelectedTableIds(allTableIds);
         setFileName(file.name);
         setError(null);
       } catch (err) {
@@ -83,8 +89,10 @@ const App: React.FC = () => {
              setError(err instanceof Error ? `Error: ${err.message}`: 'An unknown error occurred while parsing the file.');
         }
         setSchema(null);
+        setFullSchema(null);
         setRawSchema(null);
         setFileName(null);
+        setSelectedTableIds(new Set());
       }
     };
     reader.onerror = () => {
@@ -94,12 +102,23 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-      if(schema && rawSchema){
-          const newNodes = recalculateNodeHeights(schema.nodes, rawSchema, showColumns);
-          setSchema(prev => prev ? {...prev, nodes: newNodes} : null);
+      if(fullSchema && rawSchema){
+          const newNodes = recalculateNodeHeights(fullSchema.nodes, rawSchema, showColumns);
+          setFullSchema(prev => prev ? {...prev, nodes: newNodes} : null);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showColumns, rawSchema]);
+
+  // Filter schema based on selected tables
+  useEffect(() => {
+    if (fullSchema) {
+      const filteredNodes = fullSchema.nodes.filter(node => selectedTableIds.has(node.id));
+      const filteredLinks = fullSchema.links.filter(link =>
+        selectedTableIds.has(link.source) && selectedTableIds.has(link.target)
+      );
+      setSchema({ nodes: filteredNodes, links: filteredLinks });
+    }
+  }, [fullSchema, selectedTableIds]);
 
   const handleLayoutChange = useCallback((layoutType: LayoutType) => {
     setCurrentLayout(layoutType);
@@ -108,6 +127,10 @@ const App: React.FC = () => {
       setSchema(prev => prev ? { ...prev, nodes: newNodes } : null);
     }
   }, [schema]);
+
+  const handleTableSelectionChange = useCallback((tableIds: Set<string>) => {
+    setSelectedTableIds(tableIds);
+  }, []);
 
 
   return (
@@ -120,6 +143,9 @@ const App: React.FC = () => {
         fileName={fileName}
         currentLayout={currentLayout}
         onLayoutChange={handleLayoutChange}
+        allTables={fullSchema?.nodes.map(node => ({ id: node.id, name: node.name })) || []}
+        selectedTableIds={selectedTableIds}
+        onTableSelectionChange={handleTableSelectionChange}
       />
       <main className="flex-grow relative overflow-hidden">
         {error && (
