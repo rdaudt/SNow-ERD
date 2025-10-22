@@ -87,7 +87,10 @@ export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
        <style>{`.bg-grid { background-image: radial-gradient(circle, #374151 1px, rgba(0, 0, 0, 0) 1px); background-size: 20px 20px; }`}</style>
       <div
         className="relative w-full h-full"
-        style={{ transform: transform.toString(), transformOrigin: '0 0' }}
+        style={{
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.k})`,
+          transformOrigin: '0 0'
+        }}
       >
         <svg
           className="absolute top-0 left-0 w-full h-full"
