@@ -1,0 +1,5 @@
+{
+  "name": "ERD Viewer for ServiceNow",
+  "description": "An interactive Entity-Relationship Diagram (ERD) viewer that allows users to upload a JSON schema of ServiceNow tables and visualizes the data model, including tables, columns, and relationships with crow's foot notation.",
+  "requestFramePermissions": []
+}
