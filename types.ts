@@ -49,6 +49,7 @@ export interface RelationshipLinkData {
   source: string;
   target: string;
   fromColumn: string;
+  toColumn: string;
   toTable: string;
   cardinality: string | null;
 }

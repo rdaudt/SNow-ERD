@@ -59,11 +59,16 @@ export const parseSchema = (rawSchema: RawSchema): Schema => {
     const fromTable = rawSchema.tables.find(t => t.table_name === rel.from_table);
     const fromColumn = fromTable?.columns.find(c => c.column_name === rel.from_column);
 
+    // Find the target column (typically the primary key of the target table)
+    const toTable = rawSchema.tables.find(t => t.table_name === rel.to_table);
+    const toColumn = toTable?.columns.find(c => c.is_pk);
+
     return {
       id: `link-${index}-${rel.from_table}-${rel.to_table}`,
       source: rel.from_table,
       target: rel.to_table,
       fromColumn: rel.from_column,
+      toColumn: toColumn?.column_name || '',
       toTable: rel.to_table,
       cardinality: fromColumn?.fk_cardinality || null,
     }
