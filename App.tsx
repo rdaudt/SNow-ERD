@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ERDViewer } from './components/ERDViewer';
-import { Schema, RawSchema, LayoutType } from './types';
+import { Schema, RawSchema, LayoutType, LineShape } from './types';
 import { parseSchema, recalculateNodeHeights } from './services/schemaParser';
 import { applyLayout } from './services/layoutEngine';
 
@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [fileName, setFileName] = useState<string | null>(null);
   const [currentLayout, setCurrentLayout] = useState<LayoutType>('grid');
   const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
+  const [lineShape, setLineShape] = useState<LineShape>('orthogonal');
 
   const handleFileUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -146,6 +147,8 @@ const App: React.FC = () => {
         allTables={fullSchema?.nodes.map(node => ({ id: node.id, name: node.name })) || []}
         selectedTableIds={selectedTableIds}
         onTableSelectionChange={handleTableSelectionChange}
+        lineShape={lineShape}
+        onLineShapeChange={setLineShape}
       />
       <main className="flex-grow relative overflow-hidden">
         {error && (
@@ -162,7 +165,7 @@ const App: React.FC = () => {
           </div>
         )}
         {schema ? (
-          <ERDViewer schema={schema} />
+          <ERDViewer schema={schema} lineShape={lineShape} />
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-500">
