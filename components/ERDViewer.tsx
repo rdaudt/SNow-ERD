@@ -99,7 +99,7 @@ export const ERDViewer: React.FC<{ schema: Schema; lineShape: LineShape }> = ({ 
             <marker
               id="crow"
               viewBox="0 0 10 10"
-              refX="0"
+              refX="10"
               refY="5"
               markerWidth="8"
               markerHeight="8"
