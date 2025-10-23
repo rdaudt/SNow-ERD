@@ -19,9 +19,9 @@ const Column: React.FC<{ col: ColumnType }> = ({ col }) => (
             <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10.392A7.968 7.968 0 005.5 16c1.255 0 2.443-.29 3.5-.804V4.804zM14.5 4c-1.255 0-2.443.29-3.5.804v10.392c1.057.514 2.245.804 3.5.804 1.255 0 2.443-.29 3.5-.804V4.804A7.968 7.968 0 0014.5 4z" />
         </svg>
       )}
-      <span className={`truncate ${col.isPk ? 'font-semibold text-gray-200' : 'text-gray-300'}`}>{col.name}</span>
+      <span className={`truncate ${col.isPk ? 'font-semibold text-black' : 'text-black'}`}>{col.name}</span>
     </div>
-    <span className="text-gray-500 font-mono text-xs">{col.type}</span>
+    <span className="text-black font-mono text-xs">{col.type}</span>
   </div>
 );
 
@@ -32,7 +32,7 @@ export const TableNode = forwardRef<HTMLDivElement, TableNodeProps>(({ data }, r
   return (
     <div
       ref={ref}
-      className="absolute bg-gray-800 border border-gray-700 rounded-lg shadow-2xl w-72 cursor-move transition-all duration-200 ease-in-out"
+      className="absolute bg-white border border-gray-400 rounded-lg shadow-2xl w-72 cursor-move transition-all duration-200 ease-in-out"
       style={{
         left: data.x,
         top: data.y,
@@ -41,8 +41,8 @@ export const TableNode = forwardRef<HTMLDivElement, TableNodeProps>(({ data }, r
       }}
     >
         <div className="h-full flex flex-col">
-            <div className="bg-gray-700/50 px-4 py-2 rounded-t-lg border-b border-gray-600 flex-shrink-0">
-                <h3 className="font-bold text-gray-100 text-center truncate">{data.name}</h3>
+            <div className="bg-gray-100 px-4 py-2 rounded-t-lg border-b border-gray-400 flex-shrink-0">
+                <h3 className="font-bold text-black text-center truncate">{data.name}</h3>
             </div>
 
             {showColumns && (
@@ -54,7 +54,7 @@ export const TableNode = forwardRef<HTMLDivElement, TableNodeProps>(({ data }, r
                     )}
                     
                     {data.pkColumns.length > 0 && data.otherColumns.length > 0 && (
-                         <hr className="border-gray-700 mx-2" />
+                         <hr className="border-gray-400 mx-2" />
                     )}
 
                     {data.otherColumns.length > 0 && (
@@ -67,7 +67,7 @@ export const TableNode = forwardRef<HTMLDivElement, TableNodeProps>(({ data }, r
             
             {!showColumns && (
                  <div className="flex-grow flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
                     </svg>
                  </div>

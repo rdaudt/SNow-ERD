@@ -83,8 +83,7 @@ export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
   }, [nodes, transform.k, nodesMap]);
 
   return (
-    <div ref={viewerRef} className="w-full h-full cursor-grab active:cursor-grabbing bg-grid relative">
-       <style>{`.bg-grid { background-color: white; background-image: radial-gradient(circle, #d1d5db 1px, rgba(0, 0, 0, 0) 1px); background-size: 20px 20px; }`}</style>
+    <div ref={viewerRef} className="w-full h-full cursor-grab active:cursor-grabbing bg-white relative">
       <div
         className="relative w-full h-full"
         style={{
