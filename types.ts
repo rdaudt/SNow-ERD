@@ -76,3 +76,11 @@ export interface LayoutOption {
   label: string;
   description: string;
 }
+
+export type LineShape = 'straight' | 'orthogonal' | 'curved';
+
+export interface LineShapeOption {
+  value: LineShape;
+  label: string;
+  description: string;
+}

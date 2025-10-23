@@ -1,11 +1,12 @@
 
 import React, { useMemo } from 'react';
-import { TableNodeData, RelationshipLinkData } from '../types';
+import { TableNodeData, RelationshipLinkData, LineShape } from '../types';
 
 interface RelationshipLineProps {
   sourceNode: TableNodeData;
   targetNode: TableNodeData;
   link: RelationshipLinkData;
+  lineShape: LineShape;
 }
 
 interface Point {
@@ -58,7 +59,7 @@ const getEdgePoint = (node: TableNodeData, yPosition: number, targetX: number): 
 };
 
 
-export const RelationshipLine: React.FC<RelationshipLineProps> = ({ sourceNode, targetNode, link }) => {
+export const RelationshipLine: React.FC<RelationshipLineProps> = ({ sourceNode, targetNode, link, lineShape }) => {
 
   const points = useMemo(() => {
     // Calculate Y positions for the specific columns
@@ -74,23 +75,53 @@ export const RelationshipLine: React.FC<RelationshipLineProps> = ({ sourceNode, 
 
   const { start, end } = points;
 
-  // Create an orthogonal path with better routing
-  // Add some horizontal offset from the table edges for cleaner appearance
-  const horizontalOffset = 30;
+  const pathData = useMemo(() => {
+    switch (lineShape) {
+      case 'straight':
+        // Simple straight line from start to end
+        return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
 
-  let pathData: string;
+      case 'curved': {
+        // Create a smooth cubic bezier curve
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
 
-  // Determine if we're going left-to-right or right-to-left
-  const startExtendX = start.x < sourceNode.x + sourceNode.width / 2
-    ? start.x - horizontalOffset
-    : start.x + horizontalOffset;
+        // Control points for the curve - adjust these for different curve shapes
+        const controlPointOffset = Math.abs(dx) * 0.5;
 
-  const endExtendX = end.x < targetNode.x + targetNode.width / 2
-    ? end.x - horizontalOffset
-    : end.x + horizontalOffset;
+        // Determine if we're going left-to-right or right-to-left
+        const startControlX = start.x < sourceNode.x + sourceNode.width / 2
+          ? start.x - controlPointOffset
+          : start.x + controlPointOffset;
 
-  // Create a path with three segments: horizontal, vertical, horizontal
-  pathData = `M ${start.x} ${start.y} L ${startExtendX} ${start.y} L ${startExtendX} ${(start.y + end.y) / 2} L ${endExtendX} ${(start.y + end.y) / 2} L ${endExtendX} ${end.y} L ${end.x} ${end.y}`;
+        const endControlX = end.x < targetNode.x + targetNode.width / 2
+          ? end.x - controlPointOffset
+          : end.x + controlPointOffset;
+
+        // Create cubic bezier curve
+        return `M ${start.x} ${start.y} C ${startControlX} ${start.y}, ${endControlX} ${end.y}, ${end.x} ${end.y}`;
+      }
+
+      case 'orthogonal':
+      default: {
+        // Create an orthogonal path with better routing
+        // Add some horizontal offset from the table edges for cleaner appearance
+        const horizontalOffset = 30;
+
+        // Determine if we're going left-to-right or right-to-left
+        const startExtendX = start.x < sourceNode.x + sourceNode.width / 2
+          ? start.x - horizontalOffset
+          : start.x + horizontalOffset;
+
+        const endExtendX = end.x < targetNode.x + targetNode.width / 2
+          ? end.x - horizontalOffset
+          : end.x + horizontalOffset;
+
+        // Create a path with three segments: horizontal, vertical, horizontal
+        return `M ${start.x} ${start.y} L ${startExtendX} ${start.y} L ${startExtendX} ${(start.y + end.y) / 2} L ${endExtendX} ${(start.y + end.y) / 2} L ${endExtendX} ${end.y} L ${end.x} ${end.y}`;
+      }
+    }
+  }, [start, end, lineShape, sourceNode, targetNode]);
 
   // Use crow's foot for 'many-to-one' on the 'from' side (source)
   // And a single tick for the 'one' side (target)

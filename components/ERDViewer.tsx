@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { TableNodeData, RelationshipLinkData, Schema } from '../types';
+import { TableNodeData, RelationshipLinkData, Schema, LineShape } from '../types';
 import { TableNode } from './TableNode';
 import { RelationshipLine } from './RelationshipLine';
 
 declare const d3: any;
 
-export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
+export const ERDViewer: React.FC<{ schema: Schema; lineShape: LineShape }> = ({ schema, lineShape }) => {
   const [nodes, setNodes] = useState<TableNodeData[]>(schema.nodes);
   const [transform, setTransform] = useState(() => d3.zoomIdentity);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -123,7 +123,7 @@ export const ERDViewer: React.FC<{ schema: Schema }> = ({ schema }) => {
             const sourceNode = nodesMap.get(link.source);
             const targetNode = nodesMap.get(link.target);
             if (!sourceNode || !targetNode) return null;
-            return <RelationshipLine key={link.id} sourceNode={sourceNode} targetNode={targetNode} link={link} />;
+            return <RelationshipLine key={link.id} sourceNode={sourceNode} targetNode={targetNode} link={link} lineShape={lineShape} />;
           })}
         </svg>
 
