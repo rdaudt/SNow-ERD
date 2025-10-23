@@ -4,6 +4,7 @@ import { TableNodeData, Column as ColumnType } from '../types';
 
 interface TableNodeProps {
   data: TableNodeData;
+  onHover?: (tableId: string | null) => void;
 }
 
 const Column: React.FC<{ col: ColumnType }> = ({ col }) => (
@@ -26,8 +27,20 @@ const Column: React.FC<{ col: ColumnType }> = ({ col }) => (
 );
 
 
-export const TableNode = forwardRef<HTMLDivElement, TableNodeProps>(({ data }, ref) => {
+export const TableNode = forwardRef<HTMLDivElement, TableNodeProps>(({ data, onHover }, ref) => {
   const showColumns = data.height > 80;
+
+  const handleMouseEnter = () => {
+    if (onHover) {
+      onHover(data.id);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (onHover) {
+      onHover(null);
+    }
+  };
 
   return (
     <div
@@ -39,6 +52,8 @@ export const TableNode = forwardRef<HTMLDivElement, TableNodeProps>(({ data }, r
         height: `${data.height}px`,
         willChange: 'transform'
       }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
         <div className="h-full flex flex-col">
             <div className="bg-gray-100 px-4 py-2 rounded-t-lg border-b border-gray-400 flex-shrink-0">

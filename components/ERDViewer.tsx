@@ -1,12 +1,21 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { TableNodeData, RelationshipLinkData, Schema, LineShape } from '../types';
+import { TableNodeData, RelationshipLinkData, Schema, LineShape, DataDictionary } from '../types';
 import { TableNode } from './TableNode';
 import { RelationshipLine } from './RelationshipLine';
+import { TableMetadataPopup } from './TableMetadataPopup';
 
 declare const d3: any;
 
-export const ERDViewer: React.FC<{ schema: Schema; lineShape: LineShape }> = ({ schema, lineShape }) => {
+interface ERDViewerProps {
+  schema: Schema;
+  lineShape: LineShape;
+  dataDictionary: DataDictionary | null;
+  hoveredTable: string | null;
+  onTableHover: (tableId: string | null) => void;
+}
+
+export const ERDViewer: React.FC<ERDViewerProps> = ({ schema, lineShape, dataDictionary, hoveredTable, onTableHover }) => {
   const [nodes, setNodes] = useState<TableNodeData[]>(schema.nodes);
   const [transform, setTransform] = useState(() => d3.zoomIdentity);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -135,8 +144,25 @@ export const ERDViewer: React.FC<{ schema: Schema; lineShape: LineShape }> = ({ 
             }}
             key={node.id}
             data={node}
+            onHover={onTableHover}
           />
         ))}
+
+        {/* Data Dictionary Popup */}
+        {hoveredTable && dataDictionary && (() => {
+          const metadata = dataDictionary.find(entry => entry.table_name === hoveredTable);
+          const node = nodesMap.get(hoveredTable);
+          if (metadata && node) {
+            return (
+              <TableMetadataPopup
+                metadata={metadata}
+                x={node.x + node.width + 10}
+                y={node.y}
+              />
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {/* Zoom Controls */}

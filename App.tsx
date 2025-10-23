@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ERDViewer } from './components/ERDViewer';
-import { Schema, RawSchema, LayoutType, LineShape } from './types';
+import { Schema, RawSchema, LayoutType, LineShape, DataDictionary } from './types';
 import { parseSchema, recalculateNodeHeights } from './services/schemaParser';
 import { applyLayout } from './services/layoutEngine';
 
@@ -15,6 +15,8 @@ const App: React.FC = () => {
   const [currentLayout, setCurrentLayout] = useState<LayoutType>('grid');
   const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
   const [lineShape, setLineShape] = useState<LineShape>('orthogonal');
+  const [dataDictionary, setDataDictionary] = useState<DataDictionary | null>(null);
+  const [hoveredTable, setHoveredTable] = useState<string | null>(null);
 
   const handleFileUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -133,6 +135,46 @@ const App: React.FC = () => {
     setSelectedTableIds(tableIds);
   }, []);
 
+  const handleDataDictionaryUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      try {
+        if (!text) {
+          throw new Error("Data dictionary file is empty or could not be read.");
+        }
+        const json = JSON.parse(text) as DataDictionary;
+
+        // Validate structure
+        if (!Array.isArray(json)) {
+          throw new Error('Invalid data dictionary format. Expected an array of table entries.');
+        }
+
+        // Validate each entry has required fields
+        for (let i = 0; i < json.length; i++) {
+          const entry = json[i];
+          if (!entry.table_name || !entry.table_label || typeof entry.record_count !== 'number' || !entry.description) {
+            throw new Error(`Invalid data dictionary entry at index ${i}. Each entry must have: table_name, table_label, record_count, and description.`);
+          }
+        }
+
+        setDataDictionary(json);
+        setError(null);
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          setError(`Error parsing data dictionary: ${err.message}`);
+        } else {
+          setError(err instanceof Error ? `Error: ${err.message}` : 'An unknown error occurred while parsing the data dictionary.');
+        }
+        setDataDictionary(null);
+      }
+    };
+    reader.onerror = () => {
+      setError('Failed to read the data dictionary file.');
+    };
+    reader.readAsText(file);
+  }, []);
+
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-gray-100 font-sans">
@@ -149,6 +191,8 @@ const App: React.FC = () => {
         onTableSelectionChange={handleTableSelectionChange}
         lineShape={lineShape}
         onLineShapeChange={setLineShape}
+        onDataDictionaryUpload={handleDataDictionaryUpload}
+        hasDataDictionary={!!dataDictionary}
       />
       <main className="flex-grow relative overflow-hidden">
         {error && (
@@ -165,7 +209,13 @@ const App: React.FC = () => {
           </div>
         )}
         {schema ? (
-          <ERDViewer schema={schema} lineShape={lineShape} />
+          <ERDViewer
+            schema={schema}
+            lineShape={lineShape}
+            dataDictionary={dataDictionary}
+            hoveredTable={hoveredTable}
+            onTableHover={setHoveredTable}
+          />
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-500">
