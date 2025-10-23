@@ -26,6 +26,11 @@ export const ERDViewer: React.FC<ERDViewerProps> = ({ schema, lineShape, dataDic
     return new Map(nodes.map(node => [node.id, node]));
   }, [nodes]);
 
+  // Create a stable string of node IDs to detect when tables are added/removed (not just moved)
+  const nodeIdsKey = useMemo(() => {
+    return nodes.map(n => n.id).sort().join(',');
+  }, [nodes]);
+
   useEffect(() => {
     setNodes(schema.nodes);
   }, [schema.nodes]);
@@ -70,11 +75,9 @@ export const ERDViewer: React.FC<ERDViewerProps> = ({ schema, lineShape, dataDic
     }
   };
 
+  // Set up drag handlers only when node IDs change or zoom changes, not on every position update
   useEffect(() => {
     nodeRefs.current.forEach((ref, id) => {
-      const node = nodesMap.get(id);
-      if (!node) return;
-
       const drag = d3.drag()
         .on('start', (event: any) => {
           event.sourceEvent.stopPropagation();
@@ -89,7 +92,7 @@ export const ERDViewer: React.FC<ERDViewerProps> = ({ schema, lineShape, dataDic
 
       d3.select(ref).call(drag);
     });
-  }, [nodes, transform.k, nodesMap]);
+  }, [nodeIdsKey, transform.k]);
 
   return (
     <div ref={viewerRef} className="w-full h-full cursor-grab active:cursor-grabbing bg-white relative">
