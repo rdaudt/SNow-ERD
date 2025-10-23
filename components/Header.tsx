@@ -21,6 +21,8 @@ interface HeaderProps {
   onTableSelectionChange: (tableIds: Set<string>) => void;
   lineShape: LineShape;
   onLineShapeChange: (lineShape: LineShape) => void;
+  onDataDictionaryUpload: (file: File) => void;
+  hasDataDictionary: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,9 +37,12 @@ export const Header: React.FC<HeaderProps> = ({
   selectedTableIds,
   onTableSelectionChange,
   lineShape,
-  onLineShapeChange
+  onLineShapeChange,
+  onDataDictionaryUpload,
+  hasDataDictionary
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dataDictionaryInputRef = useRef<HTMLInputElement>(null);
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showTableSelector, setShowTableSelector] = useState(false);
   const [showLineShapeMenu, setShowLineShapeMenu] = useState(false);
@@ -58,6 +63,17 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleDataDictionaryFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      onDataDictionaryUpload(file);
+    }
+  };
+
+  const handleDataDictionaryClick = () => {
+    dataDictionaryInputRef.current?.click();
   };
 
   const handleTableToggle = (tableId: string) => {
@@ -276,12 +292,32 @@ export const Header: React.FC<HeaderProps> = ({
                 />
               </button>
             </div>
+
+            {/* Data Dictionary Button */}
+            <button
+              onClick={handleDataDictionaryClick}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-md flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10.392A7.968 7.968 0 015.5 16c1.255 0 2.443-.29 3.5-.804V4.804zM14.5 4c-1.255 0-2.443.29-3.5.804v10.392c1.057.514 2.245.804 3.5.804 1.255 0 2.443-.29 3.5-.804V4.804A7.968 7.968 0 0014.5 4z" />
+              </svg>
+              <span className="text-sm">
+                {hasDataDictionary ? 'Data Dictionary Loaded' : 'Load Data Dictionary (optional)'}
+              </span>
+            </button>
           </>
         )}
         <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
+          className="hidden"
+          accept=".json"
+        />
+        <input
+          type="file"
+          ref={dataDictionaryInputRef}
+          onChange={handleDataDictionaryFileChange}
           className="hidden"
           accept=".json"
         />

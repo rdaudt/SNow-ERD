@@ -84,3 +84,12 @@ export interface LineShapeOption {
   label: string;
   description: string;
 }
+
+export interface DataDictionaryEntry {
+  table_name: string;
+  table_label: string;
+  record_count: number;
+  description: string;
+}
+
+export type DataDictionary = DataDictionaryEntry[];
