@@ -13,55 +13,85 @@ interface Point {
   y: number;
 }
 
-// Helper to find the intersection of a line with a rectangle's boundary
-const getIntersectionPoint = (rect: TableNodeData, externalPoint: Point): Point => {
-    const { x, y, width, height } = rect;
-    const cx = x + width / 2;
-    const cy = y + height / 2;
+const TABLE_HEADER_HEIGHT = 48;
+const COLUMN_HEIGHT = 24;
+const TABLE_PADDING_HEIGHT = 8;
 
-    const dx = externalPoint.x - cx;
-    const dy = externalPoint.y - cy;
-    
-    if (dx === 0 && dy === 0) {
-        return {x: cx, y: cy};
+// Helper to calculate the Y position of a specific column within a table
+const getColumnYPosition = (node: TableNodeData, columnName: string): number => {
+  let yOffset = node.y + TABLE_HEADER_HEIGHT + TABLE_PADDING_HEIGHT;
+
+  // Check if column is in PK section
+  const pkIndex = node.pkColumns.findIndex(col => col.name === columnName);
+  if (pkIndex !== -1) {
+    yOffset += pkIndex * COLUMN_HEIGHT + COLUMN_HEIGHT / 2;
+    return yOffset;
+  }
+
+  // Check if column is in other columns section
+  const otherIndex = node.otherColumns.findIndex(col => col.name === columnName);
+  if (otherIndex !== -1) {
+    // Add height of PK section if it exists
+    if (node.pkColumns.length > 0) {
+      yOffset += node.pkColumns.length * COLUMN_HEIGHT + TABLE_PADDING_HEIGHT + 8; // 8 for separator
     }
+    yOffset += otherIndex * COLUMN_HEIGHT + COLUMN_HEIGHT / 2;
+    return yOffset;
+  }
 
-    const tan_phi = dy / dx;
-    const tan_theta = height / width;
+  // Fallback to center if column not found
+  return node.y + node.height / 2;
+};
 
-    let border_x, border_y;
+// Helper to get the edge point on the left or right side of a table at a specific Y position
+const getEdgePoint = (node: TableNodeData, yPosition: number, targetX: number): Point => {
+  const nodeCenterX = node.x + node.width / 2;
 
-    if (Math.abs(tan_phi) < tan_theta) {
-        // Intersects with left or right side
-        border_x = cx + (dx > 0 ? width / 2 : -width / 2);
-        border_y = cy + tan_phi * (border_x - cx);
-    } else {
-        // Intersects with top or bottom side
-        border_y = cy + (dy > 0 ? height / 2 : -height / 2);
-        border_x = cx + (border_y - cy) / tan_phi;
-    }
-    
-    return { x: border_x, y: border_y };
+  // Determine if target is to the left or right
+  if (targetX < nodeCenterX) {
+    // Connect from left edge
+    return { x: node.x, y: yPosition };
+  } else {
+    // Connect from right edge
+    return { x: node.x + node.width, y: yPosition };
+  }
 };
 
 
 export const RelationshipLine: React.FC<RelationshipLineProps> = ({ sourceNode, targetNode, link }) => {
-    
-  const points = useMemo(() => {
-    const sourceCenter = { x: sourceNode.x + sourceNode.width / 2, y: sourceNode.y + sourceNode.height / 2 };
-    const targetCenter = { x: targetNode.x + targetNode.width / 2, y: targetNode.y + targetNode.height / 2 };
 
-    const start = getIntersectionPoint(sourceNode, targetCenter);
-    const end = getIntersectionPoint(targetNode, sourceCenter);
-    
+  const points = useMemo(() => {
+    // Calculate Y positions for the specific columns
+    const sourceY = getColumnYPosition(sourceNode, link.fromColumn);
+    const targetY = getColumnYPosition(targetNode, link.toColumn);
+
+    // Get the edge points based on relative positions
+    const start = getEdgePoint(sourceNode, sourceY, targetNode.x + targetNode.width / 2);
+    const end = getEdgePoint(targetNode, targetY, sourceNode.x + sourceNode.width / 2);
+
     return { start, end };
-  }, [sourceNode, targetNode]);
+  }, [sourceNode, targetNode, link.fromColumn, link.toColumn]);
 
   const { start, end } = points;
-  
-  // Create a simple orthogonal path (elbow connector)
-  const pathData = `M ${start.x} ${start.y} L ${start.x} ${end.y} L ${end.x} ${end.y}`;
-  
+
+  // Create an orthogonal path with better routing
+  // Add some horizontal offset from the table edges for cleaner appearance
+  const horizontalOffset = 30;
+
+  let pathData: string;
+
+  // Determine if we're going left-to-right or right-to-left
+  const startExtendX = start.x < sourceNode.x + sourceNode.width / 2
+    ? start.x - horizontalOffset
+    : start.x + horizontalOffset;
+
+  const endExtendX = end.x < targetNode.x + targetNode.width / 2
+    ? end.x - horizontalOffset
+    : end.x + horizontalOffset;
+
+  // Create a path with three segments: horizontal, vertical, horizontal
+  pathData = `M ${start.x} ${start.y} L ${startExtendX} ${start.y} L ${startExtendX} ${(start.y + end.y) / 2} L ${endExtendX} ${(start.y + end.y) / 2} L ${endExtendX} ${end.y} L ${end.x} ${end.y}`;
+
   // Use crow's foot for 'many-to-one' on the 'from' side (source)
   // And a single tick for the 'one' side (target)
   const markerStart = link.cardinality === 'many-to-one' ? "url(#crow)" : "url(#one)";
